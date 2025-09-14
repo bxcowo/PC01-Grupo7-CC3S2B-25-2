@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [ -f ".env" ]; then
+    source .env
+fi
+
 TARGETS=${TARGETS:-"https://www.google.com https://github.com"}
 CHECK_INTERVAL=${CHECK_INTERVAL:-60}
 DNS_SERVER=${DNS_SERVER:-"8.8.8.8"}
@@ -104,19 +108,24 @@ Comandos:
   check-http URL [CODE]    - Solo verificación HTTP (defecto: 200)
   check-dns URL            - Solo verificación DNS  
   check-tls URL            - Solo verificación TLS
+  run-all                  - Monitorear todos los targets configurados
   help                     - Mostrar esta ayuda
+
+Variables de entorno:
+  TARGETS="$TARGETS"
+  CHECK_INTERVAL="$CHECK_INTERVAL$"
+  DNS_SERVER="$DNS_SERVER"
 
 Ejemplos:
   $0 monitor https://www.google.com
   $0 check-http https://httpbin.org/status/404 404
-  $0 check-dns https://github.com
-  $0 check-tls https://www.google.com
+  $0 run-all
 EOF
 }
 
 # monitoreo
 main() {
-    case "${1:-}" in
+    case "${1:-run-all}" in
         "monitor")
             [ -z "$2" ] && { log "ERROR" "URL requerida"; exit 1; }
             monitor_target "$2"
@@ -132,6 +141,15 @@ main() {
         "check-tls")
             [ -z "$2" ] && { log "ERROR" "URL requerida"; exit 1; }
             check_tls "$2"
+            ;;
+        "run-all")
+            log "INFO" "Iniciando monitoreo de targets: $TARGETS"
+            local failed=0
+            for target in $TARGETS; do
+                monitor_target "$target" || ((failed++))
+            done
+            log "INFO" "Monitoreo completado. Fallos: $failed"
+            exit $failed
             ;;
         "help"|"--help"|"-h")
             show_help
