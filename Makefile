@@ -1,6 +1,8 @@
 # Makefile para Builder de Scripts de Monitoreo
 
-include .env
+-include .env
+
+RELEASE ?= 1.0.0
 
 .PHONY: tools build test run pack clean help
 
@@ -15,7 +17,7 @@ tools: ## Verificación de herramientas necesarias
 build: tools ## Construcción de artefactos
 	@mkdir -p out
 	@echo "Construyendo scripts de monitoreo"
-	@bash src/builder.sh > out/monitor.sh
+	@bash src/monitor.sh > out/monitor.sh
 	@chmod +x out/monitor.sh
 	@echo "Build completado en out/monitor.sh"
 
