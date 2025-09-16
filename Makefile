@@ -17,13 +17,13 @@ tools: ## Verificación de herramientas necesarias
 build: tools ## Construcción de artefactos
 	@mkdir -p out
 	@echo "Construyendo scripts de monitoreo"
-	@bash src/monitor.sh > out/monitor.sh
+	@cat src/monitor.sh > out/monitor.sh
 	@chmod +x out/monitor.sh
 	@echo "Build completado en out/monitor.sh"
 
 test: build ## Ejecución de pruebas
 	@echo "Ejecutando suite de pruebas..."
-	@bats test/*.bats
+	@bats tests/*.bats
 
 run: build ## Ejecución del monitoreo
 	@echo "Iniciando el monitoreo..."
