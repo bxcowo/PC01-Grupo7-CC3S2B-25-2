@@ -33,12 +33,12 @@ PC01-Grupo7-CC3S2B-25-2/
 ## Bitácora del Sprint 1
 
 ### Objetivo
-Sentar las bases con **Makefile básico** y primeros scripts Bash.  
+Sentar las bases con **Makefile básico** y primeros scripts Bash.
 
 ### Logros
 - Crear builder con here-docs en Bash.
 - Configurar comandos iniciales de red (nc).
-- Validar estructura mínima del proyecto.  
+- Validar estructura mínima del proyecto.
 
 ### Dificultades
 - Aprendizaje de reglas patrón en Makefile.
@@ -67,3 +67,6 @@ Sentar las bases con **Makefile básico** y primeros scripts Bash.
     ```bash
     ./monitor.sh <URL_o_HOST>
     ```
+
+## Links de videos de los Sprints
+**Sprint 1:**: https://drive.google.com/file/d/1qC4WKTOaIcJOuRhj3oYYUSobf3hbZLZs/view?usp=sharing
