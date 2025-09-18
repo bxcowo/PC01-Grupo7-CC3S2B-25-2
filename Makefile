@@ -29,7 +29,7 @@ $(OUT_DIR):
 $(DIST_DIR):
 	@mkdir -p $(DIST_DIR)
 
-.PHONY: tools build test run pack clean help
+.PHONY: tools build test run run-complete run-targets pack clean help
 
 tools: ## Verificación de herramientas necesarias
 	@echo "Verificando herramientas..."
