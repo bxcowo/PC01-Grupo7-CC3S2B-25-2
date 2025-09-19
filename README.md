@@ -187,5 +187,5 @@ export TARGETS="https://site1.com https://site2.com"
 - `out/tls_detailed_[dominio].log`: Análisis TLS completo
 
 ## Links de videos de los Sprints
-**Sprint 1**: https://drive.google.com/file/d/1qC4WKTOaIcJOuRhj3oYYUSobf3hbZLZs/view?usp=sharing
-
+**Sprint 1**: https://drive.google.com/file/d/1qC4WKTOaIcJOuRhj3oYYUSobf3hbZLZs/view
+**Sprint 2**: https://drive.google.com/file/d/1dywVJG72JM3UY7ZNKYSpRjHW5o9iNRIs/view
