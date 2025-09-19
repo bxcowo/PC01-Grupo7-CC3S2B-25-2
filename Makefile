@@ -2,41 +2,71 @@
 
 -include .env
 
+# Variables de configuracion
 RELEASE ?= 1.0.0
+URL ?= https://github.com
+SRC_DIR := src
+OUT_DIR := out
+DIST_DIR := dist
+TESTS_DIR := tests
 
-.PHONY: tools build test run pack clean help
+# Fuentes y objetivos para reglas patron
+CHECK_SCRIPTS := $(wildcard $(SRC_DIR)/check_*.sh)
+BUILDER_SCRIPT := $(SRC_DIR)/builder.sh
+MONITOR_SCRIPT := $(OUT_DIR)/monitor.sh
+TESTS_SCRIPT := $(wildcard $(TESTS_DIR)/*.bats)
+
+# Definición de Empaquetación
+DIST_PACK := $(DIST_DIR)/monitor-$(RELEASE).tar.gz
+
+# Herramientas necesarias
+NEED_TOOLS := curl dig nc bats
+
+# Crear directorios necesarios
+$(OUT_DIR):
+	@mkdir -p $(OUT_DIR)
+
+$(DIST_DIR):
+	@mkdir -p $(DIST_DIR)
+
+.PHONY: tools build test run run-complete run-targets pack clean help
 
 tools: ## Verificación de herramientas necesarias
 	@echo "Verificando herramientas..."
-	@which curl >/dev/null || (echo "Error: curl no encontrado" && exit 1)
-	@which dig >/dev/null || (echo "Error: dig no encontrado" && exit 1)
-	@which nc >/dev/null || (echo "Error: nc no encontrado" && exit 1)
-	@which bats >/dev/null || (echo "Error: bats no encontrado" && exit 1)
+	@for tool in $(NEED_TOOLS); do \
+        which $$tool >/dev/null || (echo "Error: $$tool no encontrado" && exit 1); \
+	done
 	@echo "Todas las herramientas están disponibles"
 
-build: tools ## Construcción de artefactos
-	@mkdir -p out
+build: tools $(OUT_DIR) ## Construcción de artefactos
 	@echo "Construyendo scripts de monitoreo"
-	@cat src/monitor.sh > out/monitor.sh
-	@chmod +x out/monitor.sh
-	@echo "Build completado en out/monitor.sh"
+	@bash $(BUILDER_SCRIPT) > $(MONITOR_SCRIPT)
+	@chmod +x $(MONITOR_SCRIPT)
+	@echo "Build completado en $(MONITOR_SCRIPT)"
 
 test: build ## Ejecución de pruebas
 	@echo "Ejecutando suite de pruebas..."
-	@bats tests/*.bats
+	@bats $(TESTS_SCRIPT)
 
 run: build ## Ejecución del monitoreo
-	@echo "Iniciando el monitoreo..."
-	@./out/monitor.sh
+	@echo "Iniciando el monitoreo completo..."
+	@./$(MONITOR_SCRIPT) monitor $(URL)
 
-pack: test ## Empaquetación final del código
-	@mkdir -p dist
-	@tar czf dist/monitor-$(RELEASE).tar.gz out/ src/ docs/
-	@echo "Paquete creado: dist/monitor-$(RELEASE).tar.gz"
+run-complete: build ## Ejecución del monitoreo con resultados más detallados
+	@echo "Iniciando el monitoreo completo..."
+	@./$(MONITOR_SCRIPT) monitor-complete $(URL)
+
+run-targets: build ## Ejecución del montireo en base a targets
+	@echo "Iniciando el monitoreo de los targets..."
+	@./$(MONITOR_SCRIPT) run-all
+
+pack: test $(DIST_DIR) ## Empaquetación final del código
+	@tar czf $(DIST_PACK) $(OUT_DIR)
+	@echo "Paquete creado: $(DIST_PACK)"
 
 clean: ## Limpiar artefactos
 	@echo "Limpiando artefactos..."
-	@rm -rf out/ dist/
+	@rm -rf $(OUT_DIR) $(DIST_DIR)
 
 help: ## Muestra de comandos de ayuda
 	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
