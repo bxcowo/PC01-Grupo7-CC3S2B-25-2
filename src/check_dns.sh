@@ -10,23 +10,17 @@ fi
 # Variables de entorno
 DNS_SERVER=${DNS_SERVER:-"8.8.8.8"}
 
-log() {
-    local level=$1
-    shift
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [DNS-$level] $*"
-}
-
 # Función DNS básica original (compatible con monitor.sh)
 check_dns() {
     local domain=$(echo "$1" | sed 's|^https\?://||' | cut -d'/' -f1 | cut -d':' -f1)
 
-    log "INFO" "DNS Check: $domain"
+    log "DNS" "INFO" "DNS Check: $domain"
 
     if dig +short @$DNS_SERVER "$domain" > /dev/null 2>&1; then
-        log "SUCCESS" "DNS: $domain resuelve correctamente"
+        log "DNS" "SUCCESS" "DNS: $domain resuelve correctamente"
         return 0
     else
-        log "ERROR" "DNS: $domain no resuelve"
+        log "DNS" "ERROR" "DNS: $domain no resuelve"
         return 1
     fi
 }
@@ -36,7 +30,7 @@ complete_check_dns() {
     local domain=$(echo "$1" | sed 's|^https\?://||' | cut -d'/' -f1 | cut -d':' -f1)
     local status=0
 
-    log "INFO" "DNS Check completo: $domain"
+    log "DNS" "INFO" "DNS Check completo: $domain"
 
     # Array para almacenar resultados
     local -a dns_results=()
@@ -53,14 +47,14 @@ EOF
     if [ -n "$a_records" ]; then
         echo "$a_records" | head -1 | while read -r ip; do
             if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-                log "SUCCESS" "DNS A: $domain -> $ip"
+                log "DNS" "SUCCESS" "DNS A: $domain -> $ip"
                 dns_results+=("A:$ip")
             fi
         done
         # Usar tee para guardar resultados
-        echo "$a_records" | sed 's/^/A: /' | tee -a "out/dns_${domain}.log" > /dev/null
+        echo "$a_records" | sort | sed 's/^/A: /' | tee -a "out/dns_${domain}.log" > /dev/null
     else
-        log "WARNING" "DNS: No se encontraron registros A para $domain"
+        log "DNS" "WARNING" "DNS: No se encontraron registros A para $domain"
         status=1
     fi
 
@@ -68,13 +62,13 @@ EOF
     local cname_records=$(dig +short @$DNS_SERVER CNAME "$domain" 2>/dev/null)
     if [ -n "$cname_records" ]; then
         echo "$cname_records" | while read -r cname; do
-            log "SUCCESS" "DNS CNAME: $domain -> $cname"
+            log "DNS" "SUCCESS" "DNS CNAME: $domain -> $cname"
             dns_results+=("CNAME:$cname")
         done
         # Usar sed y tee para procesar y guardar
-        echo "$cname_records" | sed 's/^/CNAME: /' | tee -a "out/dns_${domain}.log" > /dev/null
+        echo "$cname_records" | sort | sed 's/^/CNAME: /' | tee -a "out/dns_${domain}.log" > /dev/null
     else
-        log "INFO" "DNS: No se encontraron registros CNAME para $domain"
+        log "DNS" "INFO" "DNS: No se encontraron registros CNAME para $domain"
     fi
 
     # Limpiar archivos temporales
@@ -82,10 +76,10 @@ EOF
 
     # Verificar si al menos resuelve básicamente
     if [ -z "$a_records" ] && [ -z "$cname_records" ]; then
-        log "ERROR" "DNS: $domain no resuelve"
+        log "DNS" "ERROR" "DNS: $domain no resuelve"
         return 1
     else
-        log "SUCCESS" "DNS: $domain resuelve correctamente"
+        log "DNS" "SUCCESS" "DNS: $domain resuelve correctamente"
         return $status
     fi
 }
@@ -120,18 +114,18 @@ main() {
 
     case "${1:-help}" in
         "basic")
-            [ -z "$2" ] && { log "ERROR" "Dominio requerido"; exit 1; }
+            [ -z "$2" ] && { log "DNS" "ERROR" "Dominio requerido"; exit 1; }
             check_dns "$2"
             ;;
         "complete")
-            [ -z "$2" ] && { log "ERROR" "Dominio requerido"; exit 1; }
+            [ -z "$2" ] && { log "DNS" "ERROR" "Dominio requerido"; exit 1; }
             complete_check_dns "$2"
             ;;
         "help"|"--help"|"-h")
             show_help
             ;;
         *)
-            log "ERROR" "Comando desconocido: $1"
+            log "DNS" "ERROR" "Comando desconocido: $1"
             show_help
             exit 1
             ;;
