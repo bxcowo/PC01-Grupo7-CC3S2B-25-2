@@ -79,34 +79,14 @@ Expandir la funcionalidad con **toolkit avanzado**, **administración robusta** 
 **Finalización del proyecto** con optimización de scripts, refactorización para mejorar la mantenibilidad y nuevas capacidades de monitoreo empresarial.
 
 ### Logros
+- Última refactorización de scripts dentro de `src/` mediante `utils.sh`
+- Agregación de script de verificación de estado de red usando `nc (netcat)` dentro del script `health_check.sh`
+- Documentación completa dentro de un `.env.example` sobre las variables de entorno disponibles.
+- Nueva suite `test_idempotency.bats` para validar reproducibilidad del build.
 
-#### Refactorización de Logging y Arquitectura
-- **Centralización completa del logging**: Se creó `src/utils.sh` con función `log()` unificada para todos los scripts.
-- **Eliminación de código duplicado**: Se removió logging redundante de `check_http.sh`, `check_dns.sh` y `check_tls.sh`.
-- **Builder mejorado**: El `builder.sh` inyecta automáticamente la función de log, siguiendo el principio DRY (Don't Repeat Yourself).
-
-#### Nueva Capacidad Empresarial: Health Check
-- **Script standalone `health_check.sh`**: Verificación de disponibilidad de puertos TCP usando `nc`.
-- **Reintentos configurables**: Variables `RETRIES` y `WAIT_SECONDS` para escenarios de CI/CD donde los servicios tardan en arrancar.
-- **Control de timeouts**: Ajuste fino de tiempos de espera para optimizar el rendimiento.
-- **Integración Makefile**: Nuevo target `health-check` para facilidad de uso.
-
-#### Optimización y Estabilidad
-- **Determinismo en DNS**: Se añadió `sort` en `check_dns.sh` para salida consistente de registros DNS.
-- **Suite de pruebas robusta**: 27 tests ejecutándose exitosamente (100% de cobertura).
-- **Test de idempotencia**: Nueva suite `test_idempotency.bats` para validar la reproducibilidad del build.
-- **Makefile avanzado**: Variables configurables y targets especializados (`run-complete`, `run-targets`, `tools`).
-
-#### Estabilización de Tests BATS
-- **Eliminación de dependencias externas**: Se removieron `bats-support` y `bats-assert` problemáticas.
-- **Tests deterministas**: Corrección de fallos intermitentes usando timeouts y verificaciones robustas.
-- **Cobertura completa**: 27/27 tests ejecutándose exitosamente sin dependencias de servicios externos.
-
-### Dificultades Superadas
-
-- **Coordinación del Refactor**: Verificación exhaustiva de que todos los scripts funcionaran tras centralizar la función `log()`.
-- **Estabilidad de Tests**: Resolución de 10 tests intermitentes que dependían de servicios externos impredecibles.
-- **Arquitectura de Decisión**: Mantener `health_check.sh` como utilidad separada para no sobrecargar el propósito del `monitor.sh` principal.
+### Dificultades
+- Obtener un resolución y correcto manejo de los tests definidos para garantizar pruebas significativas y extensas.
+- La revisión de los scripts existentes para la obtención variables de entorno signficativas dentro del proyecto.
 
 ---
 
@@ -130,32 +110,27 @@ make tools
 
 2. **Monitoreo básico**
    ```bash
-   ./out/monitor.sh monitor https://github.com
+   export URL="https://github.com"
+   make run
    ```
 
 3. **Monitoreo completo (análisis detallado)**
    ```bash
-   ./out/monitor.sh monitor-complete https://github.com
-   # O usando el Makefile
-   make run-complete URL=https://cloudflare.com
+   export URL="https://cloudflare.com"
+   make run-complete
    ```
 
 4. **Monitorear múltiples targets**
    ```bash
+   export TARGETS="https://google.com https://github.com"
    make run-targets
-   # Usa variable TARGETS del .env o valores por defecto
    ```
 
 5. **Health Check de servicios**
    ```bash
-   # Verificar puerto probablemente cerrado
-   ./src/health_check.sh localhost 8080
-   
-   # Verificar puerto probablemente abierto
-   ./src/health_check.sh google.com 443
-   
-   # Con variables de entorno
-   RETRIES=10 WAIT_SECONDS=2 ./src/health_check.sh localhost 3000
+   export HEALTH_HOST="localhost"
+   export HEALTH_PORT=8080
+   make health-check
    ```
 
 6. **Ejecutar todas las pruebas**
@@ -171,7 +146,7 @@ make tools
    ```
 
 ### Variables de configuración
-Crea un archivo `.env` para personalizar el comportamiento:
+Crea un archivo `.env` para personalizar el comportamiento basandose en el archivo `.env.example`:
 ```bash
 TARGETS="https://github.com https://google.com https://cloudflare.com"
 CHECK_INTERVAL=60
@@ -195,11 +170,15 @@ WAIT_SECONDS=3
 
 ## Resultados del Sprint 3
 
-- **✅ 27/27 tests ejecutándose exitosamente**
-- **✅ Sistema de logging centralizado y consistente** 
-- **✅ Health check empresarial con reintentos configurables**
-- **✅ Build determinista e idempotente**
-- **✅ Makefile avanzado con targets especializados**
-- **✅ Eliminación completa de dependencias externas problemáticas**
+- [x] **27/27 tests ejecutándose exitosamente**
+- [x] **Sistema de logging centralizado y consistente**
+- [x] **Health check empresarial con reintentos configurables**
+- [x] **Build determinista e idempotente**
+- [x] **Makefile avanzado con targets especializados**
+- [x] **Eliminación completa de dependencias externas problemáticas**
 
-El proyecto está **listo para producción** con arquitectura robusta, testing comprehensivo y herramientas de monitoreo empresarial.
+## Links de videos de los Sprints
+
+**Sprint 1**: https://drive.google.com/file/d/1qC4WKTOaIcJOuRhj3oYYUSobf3hbZLZs/view?usp=sharing
+
+**Sprint 2**: https://drive.google.com/file/d/1dywVJG72JM3UY7ZNKYSpRjHW5o9iNRIs/view?usp=sharing
