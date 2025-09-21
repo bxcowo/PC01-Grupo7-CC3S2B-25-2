@@ -1,25 +1,31 @@
 #!/bin/bash
 
+log() {
+    local level=$1
+    shift
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [HTTP-$level] $*"
+}
+
 # verificar HTTP codes
 check_http() {
     local url=$1
     local expected_code=${2:-200}
 
-    log "HTTP" "INFO" "HTTP Check: $url"
+    log "INFO" "HTTP Check: $url"
 
     local response_code=$(curl -s -o /dev/null -w "%{http_code}" "$url" 2>/dev/null)
     local curl_exit=$?
 
     if [ $curl_exit -ne 0 ]; then
-        log "HTTP" "ERROR" "HTTP: Conexión fallida - $url"
+        log "ERROR" "HTTP: Conexión fallida - $url"
         return 1
     fi
 
     if [ "$response_code" = "$expected_code" ]; then
-        log "HTTP" "SUCCESS" "HTTP: $url ($response_code)"
+        log "SUCCESS" "HTTP: $url ($response_code)"
         return 0
     else
-        log "HTTP" "WARNING" "HTTP: $url esperado[$expected_code] recibido[$response_code]"
+        log "WARNING" "HTTP: $url esperado[$expected_code] recibido[$response_code]"
         return 1
     fi
 }
@@ -50,7 +56,7 @@ main() {
             show_help
             ;;
         *)
-            [ -z "$1" ] && { log "HTTP" "ERROR" "URL requerida"; exit 1; }
+            [ -z "$1" ] && { log "ERROR" "URL requerida"; exit 1; }
             check_http "$1" "$2"
             ;;
     esac

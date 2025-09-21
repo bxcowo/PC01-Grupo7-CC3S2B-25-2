@@ -5,9 +5,6 @@
 # Variables de configuracion
 RELEASE ?= 1.0.0
 URL ?= https://github.com
-HEALTH_HOST ?= localhost
-HEALTH_PORT ?= 80
-
 SRC_DIR := src
 OUT_DIR := out
 DIST_DIR := dist
@@ -32,7 +29,7 @@ $(OUT_DIR):
 $(DIST_DIR):
 	@mkdir -p $(DIST_DIR)
 
-.PHONY: tools build test run run-complete run-targets health-check pack clean help
+.PHONY: tools build test run run-complete run-targets pack clean help
 
 tools: ## Verificación de herramientas necesarias
 	@echo "Verificando herramientas..."
@@ -62,10 +59,6 @@ run-complete: build ## Ejecución del monitoreo con resultados más detallados
 run-targets: build ## Ejecución del montireo en base a targets
 	@echo "Iniciando el monitoreo de los targets..."
 	@./$(MONITOR_SCRIPT) run-all
-
-health-check: build ## Ejecución de una verificación del estado de la red
-	@echo "Iniciando verificación del estado de la red definida..."
-	@./$(MONITOR_SCRIPT) health-check $(HEALTH_HOST) $(HEALTH_PORT)
 
 pack: test $(DIST_DIR) ## Empaquetación final del código
 	@tar czf $(DIST_PACK) $(OUT_DIR)

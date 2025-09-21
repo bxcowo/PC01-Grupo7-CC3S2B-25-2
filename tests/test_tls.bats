@@ -4,20 +4,14 @@
 
 setup() {
     export TEST_TEMP_DIR="$(mktemp -d)"
-    
-    # Crear directorio out si no existe
-    mkdir -p out
 
     # Trap para limpieza automática
     trap cleanup EXIT
 }
 
 cleanup() {
-    if [ -d "$TEST_TEMP_DIR" ]; then
-        rm -rf "$TEST_TEMP_DIR"
-    fi
-    # Limpiar archivos de log TLS
-    rm -f out/tls_*.log 2>/dev/null || true
+    [ -d "$TEST_TEMP_DIR" ] && rm -rf "$TEST_TEMP_DIR"
+    [ -f "out/tls_*.log" ] && rm -f out/tls_*.log
     touch "out/cleanup.done"
 }
 
@@ -43,14 +37,18 @@ cleanup() {
 }
 
 @test "TLS: Verificar análisis detallado" {
-    run timeout 15 ./out/monitor.sh detailed-tls https://cloudflare.com
+    run ./out/monitor.sh detailed-tls https://cloudflare.com
+    [ "$status" -eq 0 ]
     [[ "$output" =~ "TLS Check detallado" ]]
+    [[ "$output" =~ "SUCCESS.*TLS" ]]
 }
 
 @test "TLS: Fallo con certificado inválido" {
-    # Test simplificado - verificar que el comando openssl existe
-    run bash -c 'command -v openssl'
-    [ "$status" -eq 0 ]
+    skip "Requiere un dominio con certificado inválido conocido"
+    run ./out/monitor.sh check-tls https://expired.badssl.com
+    [ "$status" -eq 1 ]
+    [[ "$output" =~ "ERROR" ]]
+    [[ "$output" =~ "certificado inválido" ]]
 }
 
 @test "TLS: Fallo con dominio inexistente" {
@@ -62,14 +60,7 @@ cleanup() {
 
 @test "TLS: Verificar generación de logs detallados" {
     ./out/monitor.sh detailed-tls https://github.com > /dev/null 2>&1
-    # Verificar que se creó algún archivo de log detallado
-    if ls out/tls_detailed_*.log > /dev/null 2>&1; then
-        true
-    elif [ -f "out/tls_detailed_github.com.log" ]; then
-        true
-    else
-        false
-    fi
+    [ -f out/tls_detailed_github.com.log ] || [ -n "$(ls out/tls_detailed_*.log 2>/dev/null)" ]
 }
 
 @test "TLS: URL sin parámetros debe fallar" {
@@ -82,22 +73,12 @@ cleanup() {
     # Test con timeout de 10 segundos (definido en el script)
     run timeout 15 ./out/monitor.sh check-tls https://httpbin.org/delay/5
     # Debe completar o fallar gracefully
-    if [ "$status" -ne 0 ]; then
-        true
-    elif [[ "$output" =~ SUCCESS ]]; then
-        true
-    elif [[ "$output" =~ ERROR ]]; then
-        true  
-    elif [[ "$output" =~ SKIP ]]; then
-        true
-    else
-        false
-    fi
+    [ "$status" -ne 0 ] || [[ "$output" =~ "SUCCESS\|ERROR\|SKIP" ]]
 }
 
 @test "TLS: Verificar limpieza con trap" {
-    # Ejecutar un comando TLS que cree archivos
+    # Ejecutar y luego verificar que se creó el archivo de limpieza
     ./out/monitor.sh check-tls https://google.com >/dev/null 2>&1
-    # Verificar que el archivo de cleanup se creó o que el proceso completó
-    [ -f "out/cleanup.done" ] || true
+    # El cleanup del setup debería haber creado el archivo
+    [ -f "out/cleanup.done" ]
 }

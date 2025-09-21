@@ -10,14 +10,11 @@ fi
 TARGETS=${TARGETS:-"https://www.google.com https://github.com"}
 CHECK_INTERVAL=${CHECK_INTERVAL:-60}
 DNS_SERVER=${DNS_SERVER:-"8.8.8.8"}
-RETRIES=${RETRIES:-5}
-WAIT_SECONDS=${WAIT_SECONDS:-3}
-TIMEOUT_NC=${TIMEOUT_NC:-5}
 
 EOF
 
 # Extrae la función de log
-sed -n '/^log()/,/^}/p' src/utils.sh
+sed -n '/^log()/,/^}/p' src/check_http.sh
 echo ""
 
 # Extrae las funciones asociadas al análisis de HTTP
@@ -34,10 +31,6 @@ echo ""
 sed -n '/^check_tls()/,/^}/p' src/check_tls.sh
 echo ""
 sed -n '/^check_tls_detailed()/,/^}/p' src/check_tls.sh
-echo ""
-
-# Extrae las funciones asociadas al health check
-sed -n '/^run_check()/,/^}/p' src/health_check.sh
 echo ""
 
 cat << 'EOF'
@@ -81,7 +74,7 @@ monitor_target_complete() {
 
 show_help() {
     cat << 'HELP_EOF'
-Monitor de sitios web - HTTP/DNS/TLS/Health Check
+Monitor de sitios web - HTTP/DNS/TLS
 
 Uso: monitor.sh [COMANDO] [ARGUMENTOS]
 
@@ -93,17 +86,15 @@ Comandos:
   complete-dns URL         - DNS completo con registros A y CNAME
   check-tls URL            - Solo verificación TLS
   detailed-tls URL         - Verificación TLS detallada
-  health-check HOST PORT   - Verificar conexión TCP a host:puerto
   run-all                  - Monitorear todos los targets configurados
   help                     - Mostrar esta ayuda
 
 Variables de entorno:
-  TARGETS, CHECK_INTERVAL, DNS_SERVER, RETRIES, WAIT_SECONDS
+  TARGETS, CHECK_INTERVAL, DNS_SERVER
 
 Ejemplos:
   ./monitor.sh monitor https://www.google.com
   ./monitor.sh check-http https://httpbin.org/status/404 404
-  ./monitor.sh health-check localhost 8080
   ./monitor.sh run-all
 HELP_EOF
 }
@@ -139,10 +130,6 @@ main() {
         "detailed-tls")
             [ -z "$2" ] && { log "ERROR" "URL requerida"; exit 1; }
             check_tls_detailed "$2"
-            ;;
-        "health-check")
-            [ -z "$2" ] || [ -z "$3" ] && { log "ERROR" "HOST y PORT requeridos"; exit 1; }
-            HOST="$2" PORT="$3" run_check
             ;;
         "run-all")
             log "INFO" "Iniciando monitoreo de targets: $TARGETS"
